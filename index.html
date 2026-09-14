@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Full Dex</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="bezel">
+  <div class="bezel-top">
+    <div class="lens"></div>
+    <div class="title-block">
+      <p class="brand">Full Dex</p>
+      <h1><span class="pokeball"></span><span id="page-title">Kanto Pokédex</span></h1>
+      <p id="page-subtitle">The original 151 — where it all began.</p>
+    </div>
+    <div class="bezel-controls">
+      <button class="quiz-btn" id="open-quiz">🎓 Take Trainer Quiz</button>
+    </div>
+  </div>
+  <div class="gen-tabs" id="gen-tabs"></div>
+  <div class="search-wrap">
+    <div class="search-slot">
+      <input id="search" type="text" placeholder="Search by name, type, or number…" />
+    </div>
+    <span id="result-count">Loading…</span>
+  </div>
+</header>
+
+<main>
+  <p id="status" role="status"></p>
+  <div id="grid" role="list"></div>
+</main>
+
+<div class="grass-band" aria-hidden="true"></div>
+
+<!-- Detail dialog -->
+<dialog id="detail-dialog">
+  <div class="detail-sheet">
+    <div class="detail-head">
+      <button id="close-detail" aria-label="Close">✕</button>
+      <p id="detail-id"></p>
+      <h2 id="detail-name"></h2>
+      <div id="detail-types" class="types"></div>
+      <div class="art-float"><img id="detail-art" class="trophy-spin" alt="" /></div>
+    </div>
+    <div class="detail-body">
+      <p id="detail-flavor">Loading Pokédex entry…</p>
+      <div id="detail-meta"></div>
+      <dl id="detail-stats"></dl>
+      <div id="detail-evolution">
+        <h3>Evolution Line</h3>
+        <div id="detail-evolution-body">Loading evolution data…</div>
+      </div>
+      <a id="detail-merch" href="#" target="_blank" rel="noopener noreferrer"></a>
+    </div>
+  </div>
+</dialog>
+
+<!-- Quiz dialog -->
+<dialog id="quiz-dialog">
+  <div class="quiz-sheet">
+    <div class="quiz-head">
+      <h2><span class="pokeball"></span>Trainer Quiz</h2>
+      <span id="quiz-score-badge">Q1 / 5</span>
+      <button id="close-quiz" aria-label="Close">✕</button>
+    </div>
+    <div class="quiz-body" id="quiz-body">
+      <!-- populated by JS -->
+    </div>
+  </div>
+</dialog>
+
+<!-- Professor Oak floating chat -->
+<button id="oak-toggle" aria-label="Open Professor Oak chat">
+  <span class="dot"></span>
+</button>
+
+<div id="oak-panel" hidden>
+  <div class="oak-head">
+    <div class="oak-avatar">🔬</div>
+    <div class="oak-head-text">
+      <h3>Professor Oak</h3>
+      <p>Pokémon Research Lab</p>
+    </div>
+    <button id="oak-minimize" aria-label="Minimize chat">–</button>
+  </div>
+  <div id="oak-messages"></div>
+  <div class="oak-input-row">
+    <textarea id="oak-input" rows="1" placeholder="Ask about types, training…"></textarea>
+    <button id="oak-send" aria-label="Send">➤</button>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

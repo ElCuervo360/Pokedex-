@@ -1,0 +1,804 @@
+  :root {
+    --red: #E3350D;
+    --red-dark: #A82407;
+    --red-deep: #7A1A05;
+    --cream: #FDF6E9;
+    --cream-dim: #F2E9D8;
+    --navy: #1F2544;
+    --navy-soft: #333B5C;
+    --slate: #5B6178;
+    --gold: #FFC94D;
+    --sage: #4B7A5C;
+    --sage-dark: #365A43;
+    --sage-pale: #E7F0E6;
+    --danger: #C23B22;
+
+    --type-normal: #A9AC94;
+    --type-fire: #E97B4B;
+    --type-water: #4E96D8;
+    --type-electric: #F3C331;
+    --type-grass: #6FB86A;
+    --type-ice: #86D3D1;
+    --type-fighting: #C2504A;
+    --type-poison: #A165B8;
+    --type-ground: #D2B24C;
+    --type-flying: #93A7EC;
+    --type-psychic: #EF6E96;
+    --type-bug: #9FBA2C;
+    --type-rock: #B9A24A;
+    --type-ghost: #6E5A9E;
+    --type-dragon: #6F5AE0;
+    --type-dark: #6B5D52;
+    --type-steel: #9AA3B0;
+    --type-fairy: #EE9AC7;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    color: var(--navy);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background-color: var(--cream-dim);
+    /* soft type-colored glows in the corners, plus a Poké Ball dot texture — swapped per region */
+    background-image:
+      radial-gradient(circle at 6% 10%, rgba(var(--theme-tl, 227,53,13),0.13), transparent 30%),
+      radial-gradient(circle at 94% 16%, rgba(var(--theme-tr, 78,150,216),0.15), transparent 30%),
+      radial-gradient(circle at 12% 88%, rgba(var(--theme-bl, 111,184,106),0.15), transparent 32%),
+      radial-gradient(circle at 90% 85%, rgba(var(--theme-br, 255,201,77),0.17), transparent 30%),
+      radial-gradient(circle at center, rgba(var(--theme-dot, 31,37,68),0.07) 0 3px, transparent 3px);
+    background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat;
+    background-size: auto, auto, auto, auto, 30px 30px;
+    background-attachment: fixed, fixed, fixed, fixed, scroll;
+    min-height: 100vh;
+    transition: background-color 0.4s ease;
+  }
+
+  /* decorative jagged ground strip along the bottom — reads as grass, waves,
+     mountains, or sand depending on the region's ground color */
+  .grass-band {
+    height: 50px;
+    margin-top: 40px;
+    background-color: var(--theme-ground, #4B7A5C);
+    clip-path: polygon(
+      0% 100%, 0% 55%, 5% 20%, 10% 55%, 15% 15%, 20% 55%, 25% 25%, 30% 55%,
+      35% 10%, 40% 55%, 45% 30%, 50% 55%, 55% 15%, 60% 55%, 65% 25%, 70% 55%,
+      75% 10%, 80% 55%, 85% 20%, 90% 55%, 95% 15%, 100% 55%, 100% 100%
+    );
+    transition: background-color 0.4s ease;
+  }
+
+  h1, h2, h3, .display { font-family: 'Fredoka', sans-serif; }
+  button { font-family: inherit; cursor: pointer; }
+
+  /* ---------- Reusable Poké Ball icon (pure CSS) ---------- */
+  .pokeball {
+    display: inline-block;
+    border-radius: 50%;
+    background:
+      linear-gradient(to bottom, var(--red) 0%, var(--red) 46%, var(--navy) 46%, var(--navy) 54%, #fff 54%, #fff 100%);
+    border: 2px solid var(--navy);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .pokeball::after {
+    content: "";
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 34%; height: 34%;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--navy);
+  }
+  .pokeball.spin { animation: pokeball-spin 0.9s linear infinite; }
+  @keyframes pokeball-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* ---------- Header / bezel ---------- */
+  header.bezel {
+    background: linear-gradient(180deg, var(--red) 0%, var(--red-dark) 100%);
+    padding: 18px 22px 22px;
+    box-shadow: 0 4px 0 var(--red-deep), 0 6px 18px rgba(122,26,5,0.35);
+    position: relative;
+  }
+  header.bezel::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -8px;
+    height: 8px;
+    background: repeating-linear-gradient(90deg, var(--navy) 0 10px, transparent 10px 20px);
+    opacity: 0.15;
+  }
+
+  .bezel-top {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  .lens {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 30%, #eaf6ff 0%, #bfe3fb 35%, #4e96d8 70%, #1f5f96 100%);
+    border: 3px solid var(--navy);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.25), inset 0 0 8px rgba(255,255,255,0.6);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .lens::before {
+    content: "";
+    position: absolute;
+    top: 6px; left: 8px;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.9);
+  }
+
+  .title-block { display: flex; flex-direction: column; }
+  .brand {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 0 0 2px;
+  }
+  .title-block h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--cream);
+    letter-spacing: 0.2px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .title-block h1 .pokeball { width: 19px; height: 19px; border-width: 1.5px; }
+  .title-block p {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: rgba(253,246,233,0.75);
+  }
+
+  .bezel-controls {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .quiz-btn {
+    background: var(--gold);
+    color: var(--navy);
+    border: none;
+    border-radius: 999px;
+    padding: 11px 20px;
+    font-weight: 700;
+    font-size: 14px;
+    box-shadow: 0 3px 0 #C99A2E;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .quiz-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 0 #C99A2E; }
+  .quiz-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #C99A2E; }
+
+  /* ---------- Generation tabs ---------- */
+  .gen-tabs {
+    max-width: 1180px;
+    margin: 16px auto 0;
+    display: flex;
+    gap: 7px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+  }
+  .gen-tabs::-webkit-scrollbar { height: 5px; }
+  .gen-tabs::-webkit-scrollbar-thumb { background: rgba(253,246,233,0.35); border-radius: 4px; }
+
+  .gen-tab {
+    flex-shrink: 0;
+    background: rgba(31,37,68,0.25);
+    border: 1.5px solid rgba(253,246,233,0.3);
+    color: var(--cream);
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 7px 13px;
+    border-radius: 999px;
+    white-space: nowrap;
+    transition: background 0.12s ease, transform 0.12s ease;
+  }
+  .gen-tab:hover { background: rgba(31,37,68,0.4); }
+  .gen-tab.active {
+    background: var(--gold);
+    color: var(--navy);
+    border-color: var(--gold);
+    transform: translateY(-1px);
+  }
+
+  .search-wrap {
+    display: flex;
+    align-items: center;
+    max-width: 1180px;
+    margin: 14px auto 0;
+    gap: 12px;
+  }
+
+  .search-slot {
+    flex: 1;
+    background: var(--navy);
+    border-radius: 10px;
+    padding: 3px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+  }
+
+  #search {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: var(--cream);
+    color: var(--navy);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    padding: 10px 14px;
+    border-radius: 7px;
+  }
+  #search::placeholder { color: var(--slate); }
+
+  #result-count {
+    color: rgba(253,246,233,0.85);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  /* ---------- Status / grid ---------- */
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 26px 22px 80px;
+  }
+
+  #status {
+    background: var(--cream);
+    border: 2px dashed var(--slate);
+    border-radius: 12px;
+    padding: 22px;
+    text-align: center;
+    color: var(--slate);
+    font-size: 15px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  #status[hidden] { display: none; }
+  #status .pokeball { width: 20px; height: 20px; }
+
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 18px;
+  }
+
+  .card {
+    background: var(--cream);
+    border-radius: 16px;
+    border: 2px solid var(--navy);
+    padding: 14px 14px 16px;
+    box-shadow: 0 3px 0 rgba(31,37,68,0.5);
+    position: relative;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    outline: none;
+  }
+  .card:hover, .card:focus-visible {
+    transform: translateY(-3px);
+    box-shadow: 0 7px 0 rgba(31,37,68,0.35), 0 10px 20px rgba(31,37,68,0.25);
+  }
+  .card:focus-visible { border-color: var(--accent-type, var(--navy)); }
+
+  /* ---------- N64-style trophy stage (card artwork) ---------- */
+  .trophy-stage {
+    background: radial-gradient(ellipse at 50% 30%, rgba(31,37,68,0.12) 0%, transparent 65%), #12142199;
+    background-color: #14162a;
+    border-radius: 10px;
+    border: 1px solid rgba(31,37,68,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 130px;
+    position: relative;
+    overflow: hidden;
+    perspective: 480px;
+  }
+  /* faint neon grid floor, à la N64 trophy gallery */
+  .trophy-stage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,201,77,0.14) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,201,77,0.14) 1px, transparent 1px);
+    background-size: 14px 14px;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 100%, black 0%, transparent 70%);
+            mask-image: radial-gradient(ellipse at 50% 100%, black 0%, transparent 70%);
+  }
+  .trophy-spin {
+    width: 88px;
+    height: 88px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    position: relative;
+    z-index: 1;
+    transform-style: preserve-3d;
+    animation: trophy-rotate 5.5s linear infinite;
+    filter: drop-shadow(0 6px 6px rgba(0,0,0,0.45));
+  }
+  @keyframes trophy-rotate {
+    from { transform: rotateY(0deg); }
+    to   { transform: rotateY(360deg); }
+  }
+  .trophy-base {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 64px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, var(--accent-type, var(--gold)) 0%, transparent 72%);
+    box-shadow:
+      0 0 10px 3px var(--accent-type, var(--gold)),
+      0 0 22px 8px color-mix(in srgb, var(--accent-type, var(--gold)) 55%, transparent);
+    animation: trophy-base-pulse 2.2s ease-in-out infinite;
+    z-index: 0;
+  }
+  @keyframes trophy-base-pulse {
+    0%, 100% { opacity: 0.55; transform: translateX(-50%) scale(0.94); }
+    50%      { opacity: 1;    transform: translateX(-50%) scale(1.04); }
+  }
+
+  .poke-id {
+    margin: 10px 0 0;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--slate);
+  }
+
+  .card h2 {
+    margin: 2px 0 4px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--navy);
+  }
+
+  .quick-stats {
+    margin: 0 0 10px;
+    font-size: 11px;
+    color: var(--slate);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .types { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .type-pill {
+    background: var(--pill, var(--slate));
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    text-transform: capitalize;
+  }
+
+  .merch-btn {
+    display: block;
+    text-align: center;
+    background: var(--navy);
+    color: var(--cream);
+    text-decoration: none;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 9px 10px;
+    border-radius: 8px;
+    transition: background 0.15s ease;
+  }
+  .merch-btn:hover { background: var(--navy-soft); }
+
+  /* ---------- Detail dialog ---------- */
+  dialog {
+    border: none;
+    border-radius: 20px;
+    padding: 0;
+    max-width: 460px;
+    width: 92vw;
+    background: transparent;
+  }
+  dialog::backdrop { background: rgba(31,37,68,0.55); backdrop-filter: blur(2px); }
+
+  .detail-sheet {
+    background: var(--cream);
+    border-radius: 20px;
+    border: 3px solid var(--navy);
+    overflow: hidden;
+  }
+
+  .detail-head {
+    background: linear-gradient(135deg, var(--accent-type, var(--slate)) 0%, var(--navy) 130%);
+    padding: 22px 22px 44px;
+    position: relative;
+  }
+
+  #close-detail {
+    position: absolute;
+    top: 14px; right: 14px;
+    background: rgba(255,255,255,0.85);
+    border: none;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    font-size: 16px;
+    line-height: 1;
+    color: var(--navy);
+    font-weight: 700;
+  }
+
+  #detail-id { color: rgba(255,255,255,0.85); font-family: 'Space Mono', monospace; font-size: 12px; margin: 0; }
+  #detail-name { color: #fff; font-size: 26px; margin: 4px 0 10px; }
+  #detail-types { display: flex; gap: 6px; }
+
+  .art-float {
+    width: 110px; height: 110px;
+    background: var(--cream);
+    border: 3px solid var(--cream);
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    display: flex; align-items: center; justify-content: center;
+    position: absolute;
+    right: 22px; bottom: -36px;
+  }
+  #detail-art { width: 78px; height: 78px; object-fit: contain; }
+
+  .detail-body { padding: 46px 22px 22px; }
+
+  #detail-flavor {
+    font-size: 14px;
+    color: var(--navy-soft);
+    line-height: 1.55;
+    margin: 0 0 14px;
+  }
+
+  #detail-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 18px;
+  }
+  #detail-meta .meta-chip {
+    background: var(--cream-dim);
+    border-radius: 999px;
+    padding: 5px 11px;
+    font-size: 11.5px;
+    color: var(--navy-soft);
+    font-weight: 600;
+  }
+  #detail-meta .meta-chip.hidden-ability { background: var(--sage-pale); color: var(--sage-dark); }
+
+  #detail-stats { margin: 0; }
+  .stat-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 34px;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .stat-row dt {
+    font-size: 11px;
+    text-transform: capitalize;
+    color: var(--slate);
+    font-weight: 600;
+  }
+  .stat-bar {
+    background: var(--cream-dim);
+    border-radius: 6px;
+    height: 8px;
+    overflow: hidden;
+    margin: 0;
+  }
+  .stat-bar span {
+    display: block;
+    height: 100%;
+    background: var(--accent-type, var(--sage));
+    border-radius: 6px;
+  }
+  .stat-row dd:last-child { margin: 0; font-size: 12px; font-weight: 700; color: var(--navy); text-align: right; }
+
+  #detail-evolution { margin-top: 18px; }
+  #detail-evolution h3 {
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  #detail-evolution-body {
+    font-size: 13px;
+    color: var(--navy-soft);
+    line-height: 1.6;
+  }
+  .evo-path { margin: 0 0 4px; }
+  .evo-path .evo-current { font-weight: 700; color: var(--navy); }
+  .evo-path .evo-arrow { color: var(--slate); margin: 0 4px; }
+
+  #detail-merch {
+    display: block;
+    margin-top: 18px;
+    text-align: center;
+    background: var(--navy);
+    color: var(--cream);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 13.5px;
+    padding: 12px;
+    border-radius: 10px;
+  }
+  #detail-merch:hover { background: var(--navy-soft); }
+
+  /* ---------- Quiz modal ---------- */
+  #quiz-dialog { max-width: 480px; }
+  .quiz-sheet {
+    background: var(--cream);
+    border-radius: 20px;
+    border: 3px solid var(--gold);
+    overflow: hidden;
+  }
+  .quiz-head {
+    background: var(--navy);
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .quiz-head h2 { color: var(--cream); font-size: 19px; margin: 0; display: flex; align-items: center; gap: 8px; }
+  .quiz-head h2 .pokeball { width: 16px; height: 16px; border-width: 1.5px; }
+  .quiz-head span { color: var(--gold); font-family: 'Space Mono', monospace; font-size: 12px; }
+  #close-quiz {
+    background: rgba(255,255,255,0.12);
+    border: none;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    color: var(--cream);
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .quiz-body { padding: 22px; min-height: 220px; }
+
+  #quiz-progress {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 16px;
+  }
+  #quiz-progress span {
+    flex: 1;
+    height: 5px;
+    border-radius: 4px;
+    background: var(--cream-dim);
+  }
+  #quiz-progress span.done { background: var(--gold); }
+  #quiz-progress span.current { background: var(--sage); }
+
+  #quiz-question {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--navy);
+    margin: 0 0 16px;
+    line-height: 1.4;
+  }
+
+  .quiz-option {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: #fff;
+    border: 2px solid var(--cream-dim);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+    color: var(--navy);
+    margin-bottom: 9px;
+    transition: border-color 0.12s ease, background 0.12s ease;
+  }
+  .quiz-option:hover:not(:disabled) { border-color: var(--sage); }
+  .quiz-option.correct { border-color: var(--sage); background: var(--sage-pale); color: var(--sage-dark); font-weight: 600; }
+  .quiz-option.incorrect { border-color: var(--danger); background: #FBEAE6; color: var(--danger); font-weight: 600; }
+  .quiz-option:disabled { cursor: default; opacity: 0.85; }
+
+  #quiz-feedback {
+    font-size: 13px;
+    color: var(--slate);
+    min-height: 18px;
+    margin: 4px 0 14px;
+  }
+
+  #quiz-next {
+    background: var(--gold);
+    border: none;
+    color: var(--navy);
+    font-weight: 700;
+    padding: 11px 20px;
+    border-radius: 999px;
+    font-size: 14px;
+    box-shadow: 0 3px 0 #C99A2E;
+    display: none;
+  }
+
+  .quiz-result { text-align: center; padding: 10px 0; }
+  .quiz-result .score {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 44px;
+    font-weight: 700;
+    color: var(--sage);
+    margin: 4px 0;
+  }
+  .quiz-result p.verdict { font-size: 15px; color: var(--navy-soft); margin: 0 0 20px; }
+  #quiz-restart {
+    background: var(--navy);
+    color: var(--cream);
+    border: none;
+    padding: 11px 22px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  /* ---------- Professor Oak chat ---------- */
+  #oak-toggle {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 28%, #fff 0%, #fff 8%, var(--danger) 9%, var(--danger) 47%, var(--navy) 48%, var(--navy) 52%, #fff 53%, #fff 100%);
+    border: 3px solid var(--navy);
+    box-shadow: 0 4px 12px rgba(31,37,68,0.4);
+    z-index: 40;
+    transition: transform 0.15s ease;
+  }
+  #oak-toggle:hover { transform: scale(1.06); }
+  #oak-toggle .dot {
+    position: absolute;
+    top: -3px; right: -3px;
+    width: 14px; height: 14px;
+    background: var(--sage);
+    border: 2px solid var(--cream);
+    border-radius: 50%;
+  }
+
+  #oak-panel {
+    position: fixed;
+    right: 22px;
+    bottom: 96px;
+    width: 330px;
+    max-height: 460px;
+    background: var(--cream);
+    border-radius: 18px;
+    border: 3px solid var(--sage-dark);
+    box-shadow: 0 12px 30px rgba(31,37,68,0.35);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 41;
+    transform-origin: bottom right;
+    transition: transform 0.16s ease, opacity 0.16s ease;
+  }
+  #oak-panel[hidden] { display: none; }
+  #oak-panel.closing { transform: scale(0.9); opacity: 0; }
+
+  .oak-head {
+    background: var(--sage-dark);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .oak-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--sage-pale);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+  .oak-head-text { flex: 1; }
+  .oak-head-text h3 { margin: 0; color: #fff; font-size: 14px; }
+  .oak-head-text p { margin: 0; color: rgba(255,255,255,0.75); font-size: 11px; }
+  #oak-minimize {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: #fff;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  #oak-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--sage-pale);
+  }
+
+  .oak-msg {
+    max-width: 85%;
+    padding: 9px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .oak-msg.assistant {
+    background: #fff;
+    color: var(--navy);
+    align-self: flex-start;
+    border-bottom-left-radius: 3px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+  .oak-msg.user {
+    background: var(--sage-dark);
+    color: #fff;
+    align-self: flex-end;
+    border-bottom-right-radius: 3px;
+  }
+  .oak-msg.typing { color: var(--slate); font-style: italic; background: #fff; align-self: flex-start; }
+
+  .oak-input-row {
+    display: flex;
+    gap: 8px;
+    padding: 10px;
+    background: var(--cream);
+    border-top: 1px solid rgba(75,122,92,0.2);
+  }
+  #oak-input {
+    flex: 1;
+    border: 1px solid rgba(75,122,92,0.35);
+    border-radius: 10px;
+    padding: 9px 11px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    outline: none;
+    resize: none;
+  }
+  #oak-input:focus { border-color: var(--sage); }
+  #oak-send {
+    background: var(--sage-dark);
+    border: none;
+    color: #fff;
+    width: 38px;
+    border-radius: 10px;
+    font-size: 15px;
+  }
+  #oak-send:disabled { opacity: 0.5; }
+
+  @media (max-width: 480px) {
+    #oak-panel { width: calc(100vw - 32px); right: 16px; }
+    #oak-toggle { right: 16px; }
+    .bezel-controls { margin-left: 0; }
+    .stat-row { grid-template-columns: 66px 1fr 30px; }
+  }
