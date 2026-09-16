@@ -19,6 +19,12 @@
       <p id="page-subtitle">The original 151 — where it all began.</p>
     </div>
     <div class="bezel-controls">
+      <button class="map-btn" id="open-map">🗺️ World Map</button>
+      <div class="sprite-toggle" role="group" aria-label="Sprite style">
+        <span class="sprite-toggle-label">Sprite Style</span>
+        <button class="sprite-toggle-btn active" data-mode="3d">HD 3D</button>
+        <button class="sprite-toggle-btn" data-mode="2d">Retro 2D</button>
+      </div>
       <button class="quiz-btn" id="open-quiz">🎓 Take Trainer Quiz</button>
     </div>
   </div>
@@ -46,12 +52,28 @@
       <p id="detail-id"></p>
       <h2 id="detail-name"></h2>
       <div id="detail-types" class="types"></div>
-      <div class="art-float"><img id="detail-art" class="trophy-spin" alt="" /></div>
+      <div class="art-float"><img id="detail-art" alt="" /></div>
     </div>
     <div class="detail-body">
       <p id="detail-flavor">Loading Pokédex entry…</p>
       <div id="detail-meta"></div>
       <dl id="detail-stats"></dl>
+      <div id="detail-moves">
+        <h3>Level-Up Moves</h3>
+        <div class="move-table-wrap">
+          <table class="move-table">
+            <thead><tr><th>Lv.</th><th>Move</th><th>Type</th></tr></thead>
+            <tbody id="detail-levelup-body"><tr><td colspan="3">Loading move data…</td></tr></tbody>
+          </table>
+        </div>
+        <h3>TM Moves</h3>
+        <div class="move-table-wrap">
+          <table class="move-table">
+            <thead><tr><th>Move</th><th>Type</th></tr></thead>
+            <tbody id="detail-tm-body"><tr><td colspan="2">Loading move data…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
       <div id="detail-evolution">
         <h3>Evolution Line</h3>
         <div id="detail-evolution-body">Loading evolution data…</div>
@@ -70,32 +92,4 @@
       <button id="close-quiz" aria-label="Close">✕</button>
     </div>
     <div class="quiz-body" id="quiz-body">
-      <!-- populated by JS -->
-    </div>
-  </div>
-</dialog>
-
-<!-- Professor Oak floating chat -->
-<button id="oak-toggle" aria-label="Open Professor Oak chat">
-  <span class="dot"></span>
-</button>
-
-<div id="oak-panel" hidden>
-  <div class="oak-head">
-    <div class="oak-avatar">🔬</div>
-    <div class="oak-head-text">
-      <h3>Professor Oak</h3>
-      <p>Pokémon Research Lab</p>
-    </div>
-    <button id="oak-minimize" aria-label="Minimize chat">–</button>
-  </div>
-  <div id="oak-messages"></div>
-  <div class="oak-input-row">
-    <textarea id="oak-input" rows="1" placeholder="Ask about types, training…"></textarea>
-    <button id="oak-send" aria-label="Send">➤</button>
-  </div>
-</div>
-
-<script src="script.js"></script>
-</body>
-</html>
+      <!-- populated by JS
