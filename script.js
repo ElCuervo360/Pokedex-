@@ -58,6 +58,12 @@ const REGION_THEMES = {
   all:{ tl: "227,53,13", tr: "78,150,216",  bl: "111,184,106", br: "255,201,77",  dot: "31,37,68",    ground: "#4B7A5C" }, // National Dex — a bit of everything
 };
 
+function regionSlug(genId) {
+  if (genId === "all") return "national";
+  const gen = GENERATIONS.find((g) => g.id === genId);
+  return gen ? gen.region.toLowerCase() : "kanto";
+}
+
 function applyRegionTheme(genId) {
   const theme = REGION_THEMES[genId] || REGION_THEMES[1];
   const root = document.documentElement.style;
@@ -67,6 +73,7 @@ function applyRegionTheme(genId) {
   root.setProperty("--theme-br", theme.br);
   root.setProperty("--theme-dot", theme.dot);
   root.setProperty("--theme-ground", theme.ground);
+  document.body.dataset.region = regionSlug(genId);
 }
 
 function rangeArray(a, b) {
@@ -115,6 +122,84 @@ function updateHeaderForGen(genId) {
     titleEl.textContent = `${gen.region} Pokédex`;
     subtitleEl.textContent = gen.blurb;
   }
+}
+
+/* =========================================================
+   World Map — a stylized world view, one island per region.
+   Positions are loosely inspired by each region's real-world
+   counterpart (Japan, Europe, etc.), not literal geography.
+   ========================================================= */
+
+const MAP_LAYOUT = {
+  5: { left: 12, top: 48, w: 86, h: 70, radius: "52% 48% 46% 54% / 55% 45% 55% 45%" }, // Unova
+  7: { left: 28, top: 78, w: 58, h: 46, radius: "50% 50% 50% 50% / 55% 45% 55% 45%" }, // Alola
+  1: { left: 46, top: 42, w: 76, h: 62, radius: "58% 42% 55% 45% / 55% 60% 40% 45%" }, // Kanto
+  2: { left: 55, top: 23, w: 64, h: 54, radius: "45% 55% 60% 40% / 50% 45% 55% 50%" }, // Johto
+  3: { left: 40, top: 63, w: 68, h: 56, radius: "50% 50% 40% 60% / 45% 55% 45% 55%" }, // Hoenn
+  4: { left: 58, top: 9,  w: 72, h: 58, radius: "55% 45% 50% 50% / 60% 40% 60% 40%" }, // Sinnoh
+  6: { left: 75, top: 40, w: 74, h: 58, radius: "55% 45% 55% 45% / 50% 50% 50% 50%" }, // Kalos
+  8: { left: 71, top: 15, w: 66, h: 54, radius: "48% 52% 48% 52% / 55% 45% 55% 45%" }, // Galar
+  9: { left: 86, top: 60, w: 66, h: 52, radius: "52% 48% 52% 48% / 48% 52% 48% 52%" }, // Paldea
+};
+
+function renderMapIslands() {
+  const ocean = document.querySelector("#map-ocean");
+  if (!ocean) return;
+
+  ocean.innerHTML = GENERATIONS.map((gen) => {
+    const layout = MAP_LAYOUT[gen.id];
+    const theme = REGION_THEMES[gen.id];
+    return `
+      <button
+        class="map-island"
+        data-gen="${gen.id}"
+        style="
+          left:${layout.left}%; top:${layout.top}%;
+          width:${layout.w}px; height:${layout.h}px;
+          border-radius:${layout.radius};
+          background: linear-gradient(155deg, rgb(${theme.tl}) 0%, rgb(${theme.br}) 100%);
+          --glow-color: rgba(${theme.tl}, 0.6);
+        "
+        aria-label="${gen.region}"
+      >
+        <span class="roman">${gen.roman}</span>
+        <span class="region-name">${gen.region}</span>
+      </button>
+    `;
+  }).join("");
+
+  const caption = document.querySelector("#map-caption");
+  const defaultCaption = "Hover or tap a region to preview it, then click to jump straight there.";
+
+  ocean.querySelectorAll(".map-island").forEach((island) => {
+    const genId = Number(island.dataset.gen);
+    const gen = GENERATIONS.find((g) => g.id === genId);
+
+    island.addEventListener("mouseenter", () => {
+      caption.textContent = `${gen.region} — ${gen.blurb}`;
+    });
+    island.addEventListener("focus", () => {
+      caption.textContent = `${gen.region} — ${gen.blurb}`;
+    });
+    island.addEventListener("mouseleave", () => {
+      caption.textContent = defaultCaption;
+    });
+    island.addEventListener("blur", () => {
+      caption.textContent = defaultCaption;
+    });
+    island.addEventListener("click", () => {
+      loadGeneration(genId);
+      document.querySelector("#map-dialog").close();
+    });
+  });
+
+  updateMapActiveIsland();
+}
+
+function updateMapActiveIsland() {
+  document.querySelectorAll(".map-island").forEach((island) => {
+    island.classList.toggle("active", Number(island.dataset.gen) === currentGenId);
+  });
 }
 
 /* =========================================================
@@ -211,19 +296,52 @@ function normalizePokemon(detail) {
     })),
     height: detail.height,
     weight: detail.weight,
+    // Retro pixel sprite only exists for Pokémon that were in the Gen V games (dex 1–649).
+    retroSprite: detail.sprites?.versions?.["generation-v"]?.["black-white"]?.front_default || null,
+    // Animated 3D-style sprite (Showdown) — this is what actually moves in 3D mode.
     showdownSprite: detail.sprites?.other?.showdown?.front_default || null,
+    // Full move-learn data (kept raw so the detail modal can split it into
+    // Level-Up vs TM tables with exact levels/methods).
+    movesRaw: (detail.moves || []).map((entry) => ({
+      name: entry.move.name,
+      details: entry.version_group_details,
+    })),
   };
 }
 
-// Structural if/else fallback: prefer the animated Showdown sprite; if a Pokémon
-// has no 3D-animated asset (common for newer/DLC entries), fall back to the
-// static official artwork so the trophy stage always has something to show.
-function trophySpriteUrl(pokemon) {
-  if (pokemon.showdownSprite) {
-    return pokemon.showdownSprite;
-  } else {
-    return artworkUrl(pokemon.id);
+// Tracks the user's 2D / 3D sprite preference from the header toggle.
+let spriteMode = "3d"; // "3d" | "2d"
+
+// Retro pixel sprites only exist for generations I–V (dex 1–649) — Gens VI–IX
+// never had 2D sprite sheets, so the toggle is hidden and 3D is forced there.
+function isRetroEligibleGen(genId) {
+  return typeof genId === "number" && genId >= 1 && genId <= 5;
+}
+
+function isRetroActiveNow() {
+  return isRetroEligibleGen(currentGenId) && spriteMode === "2d";
+}
+
+// Resolves which sprite to show and whether it should get the retro pixel
+// treatment. Retro 2D uses the colored Gen V pixel sprite when the current
+// generation actually has one. Otherwise (3D mode, or any gen outside I–V)
+// we prefer the animated Showdown sprite so Pokémon visibly move — falling
+// back to static official artwork for the rare entry without one.
+function resolveSprite(pokemon) {
+  if (isRetroActiveNow() && pokemon.retroSprite) {
+    return { url: pokemon.retroSprite, retro: true };
   }
+  if (pokemon.showdownSprite) {
+    return { url: pokemon.showdownSprite, retro: false };
+  } else {
+    return { url: artworkUrl(pokemon.id), retro: false };
+  }
+}
+
+function updateSpriteToggleVisibility() {
+  const toggleEl = document.querySelector(".sprite-toggle");
+  if (!toggleEl) return;
+  toggleEl.style.display = isRetroEligibleGen(currentGenId) ? "flex" : "none";
 }
 
 /* =========================================================
@@ -235,6 +353,9 @@ async function loadGeneration(genId) {
   updateActiveGenTab();
   updateHeaderForGen(genId);
   applyRegionTheme(genId);
+  updateOakProfessor();
+  updateMapActiveIsland();
+  updateSpriteToggleVisibility();
   searchInput.value = "";
 
   const ids = idsForGen(genId);
@@ -299,8 +420,11 @@ function renderGrid(list) {
       const primary = pokemon.types[0];
       return `
         <article class="card" role="listitem" tabindex="0" data-id="${pokemon.id}" style="--accent-type:${TYPE_COLORS[primary]}">
-          <div class="trophy-stage">
-            <img class="trophy-spin" src="${trophySpriteUrl(pokemon)}" alt="${titleCase(pokemon.name)} sprite" loading="lazy" />
+          <div class="card-image-container">
+            ${(() => {
+              const sprite = resolveSprite(pokemon);
+              return `<img class="card-image${sprite.retro ? " retro-sprite" : ""}" src="${sprite.url}" alt="${titleCase(pokemon.name)} sprite" loading="lazy" />`;
+            })()}
             <div class="trophy-base"></div>
           </div>
           <p class="poke-id">${padId(pokemon.id)}</p>
@@ -375,12 +499,101 @@ async function renderEvolutionLine(pokemon) {
   }
 }
 
+// Move types aren't included in a Pokémon's own PokéAPI payload — they live on
+// each move's own resource — so we fetch them lazily and cache by move name,
+// since common moves (Tackle, Protect, etc.) get reused across many Pokémon.
+const moveTypeCache = new Map();
+async function getMoveType(moveName) {
+  if (moveTypeCache.has(moveName)) return moveTypeCache.get(moveName);
+  try {
+    const data = await fetchJson(`${API_BASE}/move/${moveName}`);
+    const type = data.type?.name || "normal";
+    moveTypeCache.set(moveName, type);
+    return type;
+  } catch {
+    moveTypeCache.set(moveName, "normal");
+    return "normal";
+  }
+}
+
+// Splits a Pokémon's raw move-learn data into a level-sorted Level-Up table
+// and a de-duplicated TM (machine) table.
+function classifyMoves(movesRaw) {
+  const levelUp = [];
+  const tm = [];
+  const seenTm = new Set();
+
+  (movesRaw || []).forEach((entry) => {
+    const levelDetail = entry.details.find((d) => d.move_learn_method.name === "level-up");
+    if (levelDetail) {
+      levelUp.push({ name: entry.name, level: levelDetail.level_learned_at });
+    }
+    const hasMachine = entry.details.some((d) => d.move_learn_method.name === "machine");
+    if (hasMachine && !seenTm.has(entry.name)) {
+      seenTm.add(entry.name);
+      tm.push({ name: entry.name });
+    }
+  });
+
+  levelUp.sort((a, b) => a.level - b.level);
+  return { levelUp, tm };
+}
+
+function moveTypePill(moveName) {
+  const type = moveTypeCache.get(moveName) || "normal";
+  return `<span class="type-pill" style="--pill:${TYPE_COLORS[type] || "var(--slate)"}">${type}</span>`;
+}
+
+async function renderMovePool(pokemon) {
+  const levelBody = document.querySelector("#detail-levelup-body");
+  const tmBody = document.querySelector("#detail-tm-body");
+  levelBody.innerHTML = `<tr><td colspan="3">Loading move data…</td></tr>`;
+  tmBody.innerHTML = `<tr><td colspan="2">Loading move data…</td></tr>`;
+
+  const { levelUp, tm } = classifyMoves(pokemon.movesRaw);
+  const uniqueNames = [...new Set([...levelUp.map((m) => m.name), ...tm.map((m) => m.name)])];
+
+  try {
+    await mapWithConcurrency(uniqueNames, 10, (name) => getMoveType(name));
+  } catch (error) {
+    console.error("Failed loading move types:", error);
+  }
+
+  levelBody.innerHTML = levelUp.length
+    ? levelUp
+        .map(
+          (m) => `
+            <tr>
+              <td class="move-level">${m.level > 0 ? `Lv. ${m.level}` : "—"}</td>
+              <td class="move-name">${titleCase(m.name)}</td>
+              <td>${moveTypePill(m.name)}</td>
+            </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="3">No level-up moves found.</td></tr>`;
+
+  tmBody.innerHTML = tm.length
+    ? tm
+        .map(
+          (m) => `
+            <tr>
+              <td class="move-name">${titleCase(m.name)}</td>
+              <td>${moveTypePill(m.name)}</td>
+            </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="2">No TM moves found.</td></tr>`;
+}
+
 async function openDetail(id) {
   const pokemon = pokemonList.find((entry) => entry.id === Number(id));
   if (!pokemon) return;
 
-  document.querySelector("#detail-art").src = trophySpriteUrl(pokemon);
-  document.querySelector("#detail-art").alt = `${titleCase(pokemon.name)} sprite`;
+  const detailSprite = resolveSprite(pokemon);
+  const detailArtEl = document.querySelector("#detail-art");
+  detailArtEl.src = detailSprite.url;
+  detailArtEl.alt = `${titleCase(pokemon.name)} sprite`;
+  detailArtEl.classList.toggle("retro-sprite", detailSprite.retro);
   document.querySelector("#detail-id").textContent = padId(pokemon.id);
   document.querySelector("#detail-name").textContent = titleCase(pokemon.name);
   document.querySelector("#detail-types").innerHTML = typePills(pokemon.types);
@@ -432,6 +645,7 @@ async function openDetail(id) {
   }
 
   renderEvolutionLine(pokemon);
+  renderMovePool(pokemon);
 }
 
 grid.addEventListener("click", (event) => {
@@ -458,8 +672,44 @@ dialog.addEventListener("click", (event) => {
   if (event.target === dialog) dialog.close();
 });
 
-renderGenTabs();
-loadGeneration(1);
+function setupSpriteToggle() {
+  const buttons = document.querySelectorAll(".sprite-toggle-btn");
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const mode = btn.dataset.mode;
+      if (mode === spriteMode) return;
+      spriteMode = mode;
+      buttons.forEach((b) => b.classList.toggle("active", b.dataset.mode === spriteMode));
+      // No refetch needed — every cached Pokémon already carries both the
+      // showdown sprite and its artwork id, so we just re-render.
+      renderGrid(pokemonList);
+    });
+  });
+}
+
+function setupMapDialog() {
+  const openMapBtn = document.querySelector("#open-map");
+  const mapDialogEl = document.querySelector("#map-dialog");
+  const closeMapBtn = document.querySelector("#close-map");
+  const allRegionsBtn = document.querySelector("#map-all-btn");
+
+  openMapBtn.addEventListener("click", () => {
+    updateMapActiveIsland();
+    mapDialogEl.showModal();
+  });
+  closeMapBtn.addEventListener("click", () => mapDialogEl.close());
+  mapDialogEl.addEventListener("click", (event) => {
+    if (event.target === mapDialogEl) mapDialogEl.close();
+  });
+  allRegionsBtn.addEventListener("click", () => {
+    loadGeneration("all");
+    mapDialogEl.close();
+  });
+}
+
+/* Initial page setup happens at the very bottom of this file, after every
+   feature section (sprite toggle, generation tabs, Oak chat, quiz) has been
+   defined — see the bottom of the file. */
 
 /* =========================================================
    Feature: Professor Oak AI Coach (text chat, no voice)
@@ -471,16 +721,173 @@ const oakMinimize = document.querySelector("#oak-minimize");
 const oakMessagesEl = document.querySelector("#oak-messages");
 const oakInput = document.querySelector("#oak-input");
 const oakSend = document.querySelector("#oak-send");
+const oakAvatarEl = document.querySelector(".oak-avatar");
+const oakNameEl = document.querySelector(".oak-head-text h3");
+const oakSubtitleEl = document.querySelector(".oak-head-text p");
 
-const OAK_SYSTEM_PROMPT = `You are Professor Oak from the Pokémon world, running a friendly Q&A booth inside a Pokédex web app.
+// One professor per region, each with their own avatar, tone, and catchphrases.
+const PROFESSORS = {
+  1: {
+    name: "Professor Oak", region: "Kanto", avatar: "🔬",
+    badgeName: "Boulder Badge", badgeEmoji: "🪨",
+    tone: "warm and grandfatherly, a veteran researcher who's seen countless trainers pass through his lab",
+    greeting: "Hello there, trainer! Professor Oak here. Ask me about type matchups, training tips, or anything about the Pokémon in your Pokédex!",
+    catchphrases: [
+      "There is a time and place for everything, but let's stay on topic!",
+      "Hoo hoo hoo, good question, trainer!",
+      "The world of Pokémon is vast and wondrous!",
+      "Take care of your Pokémon, alright?",
+    ],
+  },
+  2: {
+    name: "Professor Elm", region: "Johto", avatar: "🥼",
+    badgeName: "Zephyr Badge", badgeEmoji: "🌪️",
+    tone: "excitable, a little scatterbrained, endlessly fascinated by Pokémon breeding and behavior",
+    greeting: "Oh! Hello there — Professor Elm, Johto's Pokémon researcher. I'm in the middle of an experiment, but I always have time for a good question!",
+    catchphrases: [
+      "Incredible! Pokémon really do continue to amaze me every day.",
+      "I really need to get back to my research after this, but ask away!",
+      "There's still so much we don't know about Pokémon breeding.",
+      "Fascinating, simply fascinating!",
+    ],
+  },
+  3: {
+    name: "Professor Birch", region: "Hoenn", avatar: "🌿",
+    badgeName: "Stone Badge", badgeEmoji: "⛰️",
+    tone: "energetic and outdoorsy, always out in the field studying Pokémon habitats",
+    greeting: "Hey there! Professor Birch here — Hoenn's field researcher. Sorry if I sound a bit out of breath, I was just out chasing down some field data!",
+    catchphrases: [
+      "The great outdoors is the best laboratory there is!",
+      "I really should be more careful running through tall grass, ha!",
+      "Every habitat tells a story about the Pokémon that live there.",
+      "Let's dig into it, trainer!",
+    ],
+  },
+  4: {
+    name: "Professor Rowan", region: "Sinnoh", avatar: "📘",
+    badgeName: "Coal Badge", badgeEmoji: "⛏️",
+    tone: "stern, no-nonsense, and gruff, but deeply caring about the bond between trainers and Pokémon underneath it",
+    greeting: "Hmph. Professor Rowan. I study the bond between Pokémon and people — so don't waste my time. What do you need to know?",
+    catchphrases: [
+      "The bond between trainer and Pokémon is not to be taken lightly.",
+      "Hmph. A reasonable question, I suppose.",
+      "Pay attention — I won't repeat myself.",
+      "Good. Curiosity is the mark of a real researcher.",
+    ],
+  },
+  5: {
+    name: "Professor Juniper", region: "Unova", avatar: "🧪",
+    badgeName: "Trio Badge", badgeEmoji: "🍃",
+    tone: "friendly, approachable, and encouraging toward new trainers",
+    greeting: "Hi there! Professor Juniper, Unova's Pokémon researcher. It's great to meet a new trainer — what would you like to know?",
+    catchphrases: [
+      "Every trainer's journey starts with a single question!",
+      "I love seeing new trainers get curious about Pokémon.",
+      "That's a great question to explore!",
+      "Keep that curiosity going, trainer.",
+    ],
+  },
+  6: {
+    name: "Professor Sycamore", region: "Kalos", avatar: "🎩",
+    badgeName: "Bug Badge", badgeEmoji: "🐛",
+    tone: "charming, refined, and passionate about the bonds between trainers and Pokémon and about Mega Evolution",
+    greeting: "Bonjour! Professor Sycamore here, studying the bonds that let trainers and Pokémon achieve incredible things — like Mega Evolution. How can I help?",
+    catchphrases: [
+      "The bond between a trainer and their Pokémon can unlock incredible power.",
+      "Magnifique question!",
+      "Every Pokémon has untapped potential — much like every trainer.",
+      "Let's explore this together, shall we?",
+    ],
+  },
+  7: {
+    name: "Professor Kukui", region: "Alola", avatar: "🏝️",
+    badgeName: "Fightinium Z", badgeEmoji: "🌺",
+    tone: "laid-back, enthusiastic, and obsessed with Pokémon moves and battling",
+    greeting: "Yo, alola! Professor Kukui here, Alola's Pokémon researcher. I study Pokémon moves — let's get fired up and talk Pokémon!",
+    catchphrases: [
+      "Alola! That's a great question to dig into.",
+      "Nothing gets me more fired up than talking Pokémon moves!",
+      "Battling and research go hand in hand out here in Alola.",
+      "Yeah, that's the spirit, trainer!",
+    ],
+  },
+  8: {
+    name: "Professor Magnolia", region: "Galar", avatar: "🧣",
+    badgeName: "Grass Badge", badgeEmoji: "🌾",
+    tone: "elderly, wise, and quietly authoritative — the leading expert on the Dynamax phenomenon",
+    greeting: "Good day, trainer. Professor Magnolia here — I've spent my life researching the Dynamax phenomenon in Galar. What can I help you understand?",
+    catchphrases: [
+      "The Dynamax phenomenon still holds many mysteries, even for me.",
+      "A thoughtful question. I appreciate that.",
+      "Galar's Pokémon have taught me more than any textbook could.",
+      "Take your studies seriously, and you'll go far.",
+    ],
+  },
+  9: {
+    name: "Professor Sada", region: "Paldea", avatar: "⏳",
+    badgeName: "Bug Badge", badgeEmoji: "🪲",
+    tone: "quietly intense and single-minded, deeply absorbed in research into Pokémon and the nature of time",
+    greeting: "Hello. Professor Sada — I research Paldea's Pokémon, and the mysteries of time itself. What would you like to know?",
+    catchphrases: [
+      "Every Pokémon is a piece of a much larger puzzle.",
+      "Time is short, so let's make this question count.",
+      "Paldea still holds secrets even I haven't uncovered.",
+      "An interesting line of inquiry.",
+    ],
+  },
+  all: {
+    name: "Professor Oak", region: "Kanto", avatar: "🔬",
+    badgeName: "Boulder Badge", badgeEmoji: "🪨",
+    tone: "warm and grandfatherly, speaking with the authority of someone who's studied every region's Pokémon",
+    greeting: "Hello there, trainer! Professor Oak here. With the National Pokédex open, we can talk about Pokémon from any region — what's on your mind?",
+    catchphrases: [
+      "There is a time and place for everything, but let's stay on topic!",
+      "Every region has its own wonders — I've made it my life's work to study them all.",
+      "The world of Pokémon is vast and wondrous!",
+      "Take care of your Pokémon, alright?",
+    ],
+  },
+};
 
-Stay strictly in character as Professor Oak at all times, no matter what the user asks:
-- Speak warmly and enthusiastically, like a veteran Pokémon researcher talking to a new trainer.
-- Open or punctuate replies naturally with Oak-style catchphrases where it fits (e.g. "Hello there, trainer!", "There is a time and place for everything, but not now.", "Take care of your Pokémon, alright?"), without overusing them in every single message.
-- Give real, accurate Pokémon knowledge: type advantages and weaknesses, breeding and training tips, evolution info, and general Pokédex trivia across all generations.
+function getCurrentProfessor() {
+  return PROFESSORS[currentGenId] || PROFESSORS[1];
+}
+
+function buildSystemPrompt(professor) {
+  return `You are ${professor.name} from the Pokémon world, running a friendly Q&A booth inside a Pokédex web app themed around the ${professor.region} region.
+
+Stay strictly in character as ${professor.name} at all times, no matter what the user asks:
+- Personality: ${professor.tone}.
+- Open or punctuate replies naturally with your own catchphrases where it fits, without overusing them in every single message. Some examples of your style: ${professor.catchphrases.join(" / ")}
+- Give real, accurate Pokémon knowledge: type advantages and weaknesses, breeding and training tips, evolution info, and general Pokédex trivia across all generations — not just your own region.
 - Keep answers concise and conversational — a few sentences, not an essay — since this is a small chat widget.
-- If asked something with no connection to Pokémon at all, gently redirect back to Pokémon topics in character, the way Oak would steer an over-eager trainer back to their studies.
+- If asked something with no connection to Pokémon at all, gently redirect back to Pokémon topics in character, the way a Pokémon professor would steer an over-eager trainer back to their studies.
 - Never break character or mention that you are an AI language model.`;
+}
+
+let lastProfessorName = null;
+
+// Refreshes the chat header (avatar/name/subtitle) for whichever region is
+// currently active, and resets the conversation if the professor has changed
+// so trainers don't get Professor Oak suddenly answering as Professor Elm.
+function updateOakProfessor() {
+  const professor = getCurrentProfessor();
+  oakAvatarEl.innerHTML = `${professor.avatar}<span class="badge-chip" title="${professor.badgeName}" aria-label="${professor.badgeName}">${professor.badgeEmoji}</span>`;
+  oakNameEl.textContent = professor.name;
+  oakSubtitleEl.textContent = `${professor.region} Pokémon Lab`;
+  oakToggle.setAttribute("aria-label", `Open ${professor.name} chat`);
+
+  if (professor.name !== lastProfessorName) {
+    lastProfessorName = professor.name;
+    oakHistory = [];
+    oakMessagesEl.innerHTML = "";
+    oakOpened = false;
+    // If the panel is already open, greet immediately with the new professor.
+    if (!oakPanel.hidden) {
+      openOakPanel();
+    }
+  }
+}
 
 // ---- Local Professor Oak knowledge engine (no network required) ----
 const TYPE_CHART = {
@@ -532,15 +939,9 @@ function listOrNone(arr) {
   return arr.map(titleCase).join(", ");
 }
 
-const OAK_CATCHPHRASES = [
-  "There is a time and place for everything, but let's stay on topic!",
-  "Hoo hoo hoo, good question, trainer!",
-  "The world of Pokémon is vast and wondrous!",
-  "Take care of your Pokémon, alright?",
-  "Every trainer's journey starts with a single question!",
-];
 function randomCatchphrase() {
-  return OAK_CATCHPHRASES[Math.floor(Math.random() * OAK_CATCHPHRASES.length)];
+  const professor = getCurrentProfessor();
+  return professor.catchphrases[Math.floor(Math.random() * professor.catchphrases.length)];
 }
 
 const OAK_TRAINING_TIPS = [
@@ -564,9 +965,10 @@ function findMentionedTypes(lowerText) {
 
 function generateOakReply(userText) {
   const lower = userText.toLowerCase();
+  const professor = getCurrentProfessor();
 
   if (/\b(hi|hello|hey|yo)\b/.test(lower)) {
-    return "Hello there, trainer! Good to see you back in the lab. What's on your mind today?";
+    return `Hello there, trainer! Good to see you back in the lab. What's on your mind today? ${randomCatchphrase()}`;
   }
 
   const mentionedMon = findMentionedPokemon(lower);
@@ -623,7 +1025,7 @@ function addOakMessage(role, text) {
 function addOakTyping() {
   const bubble = document.createElement("div");
   bubble.className = "oak-msg assistant typing";
-  bubble.textContent = "Professor Oak is thinking…";
+  bubble.textContent = `${getCurrentProfessor().name} is thinking…`;
   oakMessagesEl.appendChild(bubble);
   oakMessagesEl.scrollTop = oakMessagesEl.scrollHeight;
   return bubble;
@@ -634,10 +1036,7 @@ function openOakPanel() {
   oakPanel.classList.remove("closing");
   if (!oakOpened) {
     oakOpened = true;
-    addOakMessage(
-      "assistant",
-      "Hello there, trainer! Professor Oak here. Ask me about type matchups, training tips, or anything about the Pokémon in your Pokédex!"
-    );
+    addOakMessage("assistant", getCurrentProfessor().greeting);
   }
   oakInput.focus();
 }
@@ -678,7 +1077,7 @@ async function sendOakMessage() {
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
         max_tokens: 1000,
-        system: OAK_SYSTEM_PROMPT,
+        system: buildSystemPrompt(getCurrentProfessor()),
         messages: oakHistory,
       }),
       signal: controller.signal,
@@ -940,3 +1339,10 @@ closeQuizBtn.addEventListener("click", () => quizDialog.close());
 quizDialog.addEventListener("click", (event) => {
   if (event.target === quizDialog) quizDialog.close();
 });
+
+/* =========================================================
+   Initial page setup (runs last, once every feature above is defined)
+   ========================================================= */
+setupSpriteToggle();
+renderGenTabs();
+loadGeneration(1);
