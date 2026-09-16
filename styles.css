@@ -1,4 +1,4 @@
-  :root {
+:root {
     --red: #E3350D;
     --red-dark: #A82407;
     --red-deep: #7A1A05;
@@ -45,18 +45,49 @@
 
   body {
     background-color: var(--cream-dim);
-    /* soft type-colored glows in the corners, plus a Poké Ball dot texture — swapped per region */
-    background-image:
-      radial-gradient(circle at 6% 10%, rgba(var(--theme-tl, 227,53,13),0.13), transparent 30%),
-      radial-gradient(circle at 94% 16%, rgba(var(--theme-tr, 78,150,216),0.15), transparent 30%),
-      radial-gradient(circle at 12% 88%, rgba(var(--theme-bl, 111,184,106),0.15), transparent 32%),
-      radial-gradient(circle at 90% 85%, rgba(var(--theme-br, 255,201,77),0.17), transparent 30%),
-      radial-gradient(circle at center, rgba(var(--theme-dot, 31,37,68),0.07) 0 3px, transparent 3px);
-    background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat;
-    background-size: auto, auto, auto, auto, 30px 30px;
-    background-attachment: fixed, fixed, fixed, fixed, scroll;
+    /* soft dusk-sky wash in the region's colors, sitting behind the skyline layer */
+    background-image: linear-gradient(
+      180deg,
+      rgba(var(--theme-tl, 227,53,13), 0.28) 0%,
+      rgba(var(--theme-br, 255,201,77), 0.22) 55%,
+      transparent 100%
+    );
+    background-attachment: fixed;
     min-height: 100vh;
+    position: relative;
     transition: background-color 0.4s ease;
+  }
+
+  /* Iconic city skyline silhouette for the active region — a stylized silhouette
+     colored from the region's theme, not a literal in-game screenshot. Built with
+     a CSS mask so a single shape can be recolored per region via --theme-ground. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background-color: var(--theme-ground, #4B7A5C);
+    opacity: 0.9;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='200'%3E%3Crect x='0' y='120' width='28' height='80' fill='white'/%3E%3Crect x='30' y='80' width='22' height='120' fill='white'/%3E%3Crect x='55' y='140' width='30' height='60' fill='white'/%3E%3Crect x='88' y='50' width='24' height='150' fill='white'/%3E%3Crect x='115' y='100' width='26' height='100' fill='white'/%3E%3Crect x='144' y='70' width='20' height='130' fill='white'/%3E%3Crect x='167' y='130' width='32' height='70' fill='white'/%3E%3Crect x='202' y='90' width='22' height='110' fill='white'/%3E%3C/svg%3E");
+            mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='200'%3E%3Crect x='0' y='120' width='28' height='80' fill='white'/%3E%3Crect x='30' y='80' width='22' height='120' fill='white'/%3E%3Crect x='55' y='140' width='30' height='60' fill='white'/%3E%3Crect x='88' y='50' width='24' height='150' fill='white'/%3E%3Crect x='115' y='100' width='26' height='100' fill='white'/%3E%3Crect x='144' y='70' width='20' height='130' fill='white'/%3E%3Crect x='167' y='130' width='32' height='70' fill='white'/%3E%3Crect x='202' y='90' width='22' height='110' fill='white'/%3E%3C/svg%3E");
+    -webkit-mask-repeat: repeat-x;
+            mask-repeat: repeat-x;
+    -webkit-mask-position: bottom;
+            mask-position: bottom;
+    -webkit-mask-size: 240px 200px;
+            mask-size: 240px 200px;
+    transition: background-color 0.4s ease;
+  }
+
+  /* Frosted-glass layer over the skyline so foreground UI stays readable. */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 
   /* decorative jagged ground strip along the bottom — reads as grass, waves,
@@ -71,6 +102,8 @@
       75% 10%, 80% 55%, 85% 20%, 90% 55%, 95% 15%, 100% 55%, 100% 100%
     );
     transition: background-color 0.4s ease;
+    position: relative;
+    z-index: 1;
   }
 
   h1, h2, h3, .display { font-family: 'Fredoka', sans-serif; }
@@ -194,6 +227,161 @@
   .quiz-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 0 #C99A2E; }
   .quiz-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #C99A2E; }
 
+  .sprite-toggle {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(31,37,68,0.25);
+    border: 1.5px solid rgba(253,246,233,0.3);
+    border-radius: 999px;
+    padding: 4px 6px 4px 12px;
+  }
+  .sprite-toggle-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(253,246,233,0.8);
+    white-space: nowrap;
+  }
+  .sprite-toggle-btn {
+    background: transparent;
+    border: none;
+    color: rgba(253,246,233,0.75);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 999px;
+    transition: background 0.12s ease, color 0.12s ease;
+  }
+  .sprite-toggle-btn:hover { background: rgba(253,246,233,0.12); }
+  .sprite-toggle-btn.active {
+    background: var(--gold);
+    color: var(--navy);
+  }
+
+  .map-btn {
+    background: rgba(31,37,68,0.25);
+    border: 1.5px solid rgba(253,246,233,0.3);
+    color: var(--cream);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 9px 16px;
+    border-radius: 999px;
+    transition: background 0.12s ease, transform 0.12s ease;
+  }
+  .map-btn:hover { background: rgba(31,37,68,0.4); transform: translateY(-1px); }
+
+  /* ---------- World Map dialog ---------- */
+  #map-dialog { max-width: 640px; }
+  .map-sheet {
+    background: var(--cream);
+    border-radius: 20px;
+    border: 3px solid var(--navy);
+    overflow: hidden;
+  }
+  .map-head {
+    background: var(--navy);
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .map-head h2 { color: var(--cream); font-size: 19px; margin: 0; display: flex; align-items: center; gap: 8px; }
+  .map-head h2 .pokeball { width: 16px; height: 16px; border-width: 1.5px; }
+  #close-map {
+    background: rgba(255,255,255,0.12);
+    border: none;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    color: var(--cream);
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .map-body { padding: 20px; }
+
+  .map-ocean {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border-radius: 16px;
+    overflow: hidden;
+    background: radial-gradient(circle at 25% 15%, #2f77ab 0%, #1e5580 45%, #123650 100%);
+    border: 3px solid var(--navy);
+  }
+  /* faint wave/current texture on the ocean */
+  .map-ocean::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.08) 0 1.5px, transparent 1.5px);
+    background-size: 22px 22px;
+    pointer-events: none;
+  }
+
+  .map-island {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    border: 3px solid var(--navy);
+    color: #fff;
+    font-family: 'Fredoka', sans-serif;
+    text-align: center;
+    padding: 4px 6px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.25);
+  }
+  .map-island:hover, .map-island:focus-visible {
+    transform: translate(-50%, -50%) scale(1.14);
+    box-shadow: 0 0 0 4px rgba(255,255,255,0.3), 0 0 22px 6px var(--glow-color, rgba(255,255,255,0.5));
+    z-index: 5;
+    outline: none;
+  }
+  .map-island.active { box-shadow: 0 0 0 3px var(--gold), 0 0 16px 4px var(--gold); }
+  .map-island .roman {
+    font-size: 10.5px;
+    font-weight: 700;
+    opacity: 0.85;
+    letter-spacing: 0.5px;
+  }
+  .map-island .region-name {
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  .map-caption {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: var(--navy-soft);
+    min-height: 18px;
+    text-align: center;
+  }
+
+  .map-all-btn {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    background: var(--navy);
+    color: var(--cream);
+    border: none;
+    padding: 11px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 13.5px;
+    transition: background 0.12s ease;
+  }
+  .map-all-btn:hover { background: var(--navy-soft); }
+
+  @media (max-width: 480px) {
+    .map-island .region-name { font-size: 10.5px; }
+    .map-island .roman { font-size: 9px; }
+  }
+
   /* ---------- Generation tabs ---------- */
   .gen-tabs {
     max-width: 1180px;
@@ -309,8 +497,8 @@
   }
   .card:focus-visible { border-color: var(--accent-type, var(--navy)); }
 
-  /* ---------- N64-style trophy stage (card artwork) ---------- */
-  .trophy-stage {
+  /* ---------- Card artwork stage (N64-inspired gallery backdrop, no spin) ---------- */
+  .card-image-container {
     background: radial-gradient(ellipse at 50% 30%, rgba(31,37,68,0.12) 0%, transparent 65%), #12142199;
     background-color: #14162a;
     border-radius: 10px;
@@ -318,13 +506,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 130px;
+    height: 148px;
     position: relative;
     overflow: hidden;
-    perspective: 480px;
   }
   /* faint neon grid floor, à la N64 trophy gallery */
-  .trophy-stage::before {
+  .card-image-container::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -335,27 +522,28 @@
     -webkit-mask-image: radial-gradient(ellipse at 50% 100%, black 0%, transparent 70%);
             mask-image: radial-gradient(ellipse at 50% 100%, black 0%, transparent 70%);
   }
-  .trophy-spin {
-    width: 88px;
-    height: 88px;
+  /* Sits stable and crisp — no rotation. Sized for comfortable breathing
+     room inside the frame while still using object-fit: contain so sprites
+     never distort. */
+  .card-image {
+    width: 75%;
+    height: 75%;
     object-fit: contain;
     image-rendering: pixelated;
     position: relative;
     z-index: 1;
-    transform-style: preserve-3d;
-    animation: trophy-rotate 5.5s linear infinite;
     filter: drop-shadow(0 6px 6px rgba(0,0,0,0.45));
   }
-  @keyframes trophy-rotate {
-    from { transform: rotateY(0deg); }
-    to   { transform: rotateY(360deg); }
+  /* Retro 2D mode: crisp pixel rendering, kept in full color. */
+  .retro-sprite {
+    image-rendering: pixelated;
   }
   .trophy-base {
     position: absolute;
-    bottom: 14px;
+    bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
-    width: 64px;
+    width: 74px;
     height: 12px;
     border-radius: 50%;
     background: radial-gradient(ellipse at center, var(--accent-type, var(--gold)) 0%, transparent 72%);
@@ -435,14 +623,28 @@
   }
 
   .detail-head {
-    background: linear-gradient(135deg, var(--accent-type, var(--slate)) 0%, var(--navy) 130%);
-    padding: 22px 22px 44px;
     position: relative;
+    overflow: hidden;
+    min-height: 210px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 22px;
+  }
+  /* dark scrim so the name/types stay legible over whatever artwork sits behind them */
+  .detail-head::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(180deg, rgba(15,23,42,0.1) 0%, rgba(15,23,42,0.78) 100%);
+    pointer-events: none;
   }
 
   #close-detail {
     position: absolute;
     top: 14px; right: 14px;
+    z-index: 3;
     background: rgba(255,255,255,0.85);
     border: none;
     width: 30px; height: 30px;
@@ -453,23 +655,36 @@
     font-weight: 700;
   }
 
+  #detail-id, #detail-name, #detail-types { position: relative; z-index: 2; }
   #detail-id { color: rgba(255,255,255,0.85); font-family: 'Space Mono', monospace; font-size: 12px; margin: 0; }
   #detail-name { color: #fff; font-size: 26px; margin: 4px 0 10px; }
   #detail-types { display: flex; gap: 6px; }
 
+  /* Full-bleed artwork stage filling the header frame — no circle, no border. */
   .art-float {
-    width: 110px; height: 110px;
-    background: var(--cream);
-    border: 3px solid var(--cream);
-    border-radius: 50%;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    display: flex; align-items: center; justify-content: center;
     position: absolute;
-    right: 22px; bottom: -36px;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--accent-type, var(--slate)) 0%, var(--navy) 130%);
   }
-  #detail-art { width: 78px; height: 78px; object-fit: contain; }
+  #detail-art {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 20px;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 0;
+  }
+  /* Retro 2D mode inside the detail modal gets the same colored pixel treatment. */
+  #detail-art.retro-sprite {
+    image-rendering: pixelated;
+  }
 
-  .detail-body { padding: 46px 22px 22px; }
+  .detail-body { padding: 22px; }
 
   #detail-flavor {
     font-size: 14px;
@@ -522,6 +737,58 @@
     border-radius: 6px;
   }
   .stat-row dd:last-child { margin: 0; font-size: 12px; font-weight: 700; color: var(--navy); text-align: right; }
+
+  #detail-moves { margin-top: 18px; }
+  #detail-moves h3 {
+    margin: 16px 0 8px;
+    font-size: 13px;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  #detail-moves h3:first-child { margin-top: 0; }
+
+  .move-table-wrap {
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid rgba(31,37,68,0.12);
+    border-radius: 10px;
+  }
+  .move-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  .move-table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--cream-dim);
+    color: var(--navy);
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 7px 10px;
+    z-index: 1;
+  }
+  .move-table tbody td {
+    padding: 6px 10px;
+    color: var(--navy-soft);
+    border-top: 1px solid rgba(31,37,68,0.08);
+  }
+  .move-table tbody tr:nth-child(even) { background: rgba(31,37,68,0.03); }
+  .move-table .move-level {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    white-space: nowrap;
+    color: var(--slate);
+  }
+  .move-table .move-name {
+    font-weight: 600;
+    text-transform: capitalize;
+    color: var(--navy);
+  }
+  .move-table .type-pill { font-size: 10px; padding: 3px 8px; }
 
   #detail-evolution { margin-top: 18px; }
   #detail-evolution h3 {
@@ -668,8 +935,8 @@
     position: fixed;
     right: 22px;
     bottom: 22px;
-    width: 62px;
-    height: 62px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     background: radial-gradient(circle at 32% 28%, #fff 0%, #fff 8%, var(--danger) 9%, var(--danger) 47%, var(--navy) 48%, var(--navy) 52%, #fff 53%, #fff 100%);
     border: 3px solid var(--navy);
@@ -690,7 +957,7 @@
   #oak-panel {
     position: fixed;
     right: 22px;
-    bottom: 96px;
+    bottom: 104px;
     width: 330px;
     max-height: 460px;
     background: var(--cream);
@@ -721,6 +988,23 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 17px;
     flex-shrink: 0;
+    position: relative;
+  }
+  .badge-chip {
+    position: absolute;
+    bottom: -3px;
+    right: -3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--cream);
+    border: 2px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    line-height: 1;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.35);
   }
   .oak-head-text { flex: 1; }
   .oak-head-text h3 { margin: 0; color: #fff; font-size: 14px; }
